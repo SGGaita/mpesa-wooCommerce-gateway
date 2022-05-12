@@ -30,6 +30,8 @@ function mpesa_payment_init(){
     if( class_exists( 'WC_Payment_Gateway')){
        
 		require_once plugin_dir_path(__FILE__) . '/includes/class-wc-payment-gateway-mpesa.php';
+        require_once plugin_dir_path(__FILE__) . '/includes/mpesa-order-statuses.php';
+        require_once plugin_dir_path(__FILE__) . '/includes/mpesa-checkout-description-fields.php';
 
 	}
 }

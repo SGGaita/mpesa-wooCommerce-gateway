@@ -206,7 +206,7 @@ class WC_Gateway_LipaNaMpesa extends WC_Payment_Gateway {
 			$options[ $method->get_method_title() ] = array();
 
 			// Translators: %1$s shipping method name.
-			$options[ $method->get_method_title() ][ $method->id ] = sprintf( __( 'Any &quot;%1$s&quot; method', 'woocommerce' ), $method->get_method_title() );
+			$options[ $method->get_method_title() ][ $method->id ] = sprintf( __( 'Any &quot;%1$s&quot; method', 'mpesa-woo-pay' ), $method->get_method_title() );
 
 			foreach ( $zones as $zone ) {
 
@@ -221,10 +221,10 @@ class WC_Gateway_LipaNaMpesa extends WC_Payment_Gateway {
 					$option_id = $shipping_method_instance->get_rate_id();
 
 					// Translators: %1$s shipping method title, %2$s shipping method id.
-					$option_instance_title = sprintf( __( '%1$s (#%2$s)', 'woocommerce' ), $shipping_method_instance->get_title(), $shipping_method_instance_id );
+					$option_instance_title = sprintf( __( '%1$s (#%2$s)', 'mpesa-woo-pay' ), $shipping_method_instance->get_title(), $shipping_method_instance_id );
 
 					// Translators: %1$s zone name, %2$s shipping method instance name.
-					$option_title = sprintf( __( '%1$s &ndash; %2$s', 'woocommerce' ), $zone->get_id() ? $zone->get_zone_name() : __( 'Other locations', 'woocommerce' ), $option_instance_title );
+					$option_title = sprintf( __( '%1$s &ndash; %2$s', 'mpesa-woo-pay' ), $zone->get_id() ? $zone->get_zone_name() : __( 'Other locations', 'mpesa-woo-pay' ), $option_instance_title );
 
 					$options[ $method->get_method_title() ][ $option_id ] = $option_title;
 				}
@@ -301,8 +301,10 @@ class WC_Gateway_LipaNaMpesa extends WC_Payment_Gateway {
 		$order = wc_get_order( $order_id );
 
 		if ( $order->get_total() > 0 ) {
-			// Mark as processing or on-hold (payment won't be taken until delivery).
-			$order->update_status( apply_filters( 'woocommerce_mpesa_process_payment_order_status', $order->has_downloadable_item() ? 'on-hold' : 'processing', $order ), __( 'Payment to be made upon delivery.', 'woocommerce' ) );
+			
+			//process mpesa stk push
+			//$this->lipa_na_mpesa_payment_processing();
+			
 		} else {
 			$order->payment_complete();
 		}
@@ -315,6 +317,18 @@ class WC_Gateway_LipaNaMpesa extends WC_Payment_Gateway {
 			'result'   => 'success',
 			'redirect' => $this->get_return_url( $order ),
 		);
+	}
+
+	private function lipa_na_mpesa_payment_processing($order_id){
+		$order = wc_get_order( $order_id );
+
+
+		
+// if pending payment
+$order->update_status( apply_filters( 'woocommerce_mpesa_process_payment_order_status', $order->has_downloadable_item() ? 'wc-invoiced' : 'processing',$order ), __( 'Payments pending.', 'mpesa-woo-pay' ) );
+
+//if cleared
+$order->payment_complete();
 	}
 
 	/**
@@ -336,7 +350,7 @@ class WC_Gateway_LipaNaMpesa extends WC_Payment_Gateway {
 	 * @return string
 	 */
 	public function change_payment_complete_order_status( $status, $order_id = 0, $order = false ) {
-		if ( $order && 'cod' === $order->get_payment_method() ) {
+		if ( $order && 'mpesa_payment' === $order->get_payment_method() ) {
 			$status = 'completed';
 		}
 		return $status;
