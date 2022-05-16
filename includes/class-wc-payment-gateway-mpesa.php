@@ -1,5 +1,7 @@
 <?php
 
+use LE_ACME2\Utilities\Base64;
+
 class WC_Gateway_LipaNaMpesa extends WC_Payment_Gateway {
 
 	/**
@@ -14,11 +16,21 @@ class WC_Gateway_LipaNaMpesa extends WC_Payment_Gateway {
 		$this->init_settings();
 
 		// Get settings.
-		$this->title              = $this->get_option( 'title' );
-		$this->description        = $this->get_option( 'description' );
-		$this->instructions       = $this->get_option( 'instructions' );
-		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
-		$this->enable_for_virtual = $this->get_option( 'enable_for_virtual', 'yes' ) === 'yes';
+		$this->title                 = $this->get_option( 'title' );
+		$this->description           = $this->get_option( 'description' );
+		$this->instructions          = $this->get_option( 'instructions' );
+		$this->consumer_key          = $this->get_option( 'consumer_key' );
+		$this->consumer_secret       = $this->get_option( 'consumer_secret' );
+		$this->transaction_type		 = $this->get_option( 'transaction_type');
+		$this->business_short_code   = $this->get_option( 'business_short_code' );
+		$this->accountref			 = $this->get_option( 'accountref' );
+		$this->passKey			     = $this->get_option( 'passKey' );
+		$this->callback_url			 = $this->get_option( 'callback_url' );
+		$this->auth_url			     = $this->get_option( 'auth_url' );
+		$this->api_endpoint_url	     = $this->get_option( 'api_endpoint_url');
+		$this->passKey			     = $this->get_option( 'passKey' );
+		$this->enable_for_methods    = $this->get_option( 'enable_for_methods', array() );
+		$this->enable_for_virtual    = $this->get_option( 'enable_for_virtual', 'yes' ) === 'yes';
 
 		// Actions.
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -77,6 +89,83 @@ class WC_Gateway_LipaNaMpesa extends WC_Payment_Gateway {
 				'type'        => 'textarea',
 				'description' => __( 'Instructions that will be added to the thank you page.', 'mpesa-woo-pay' ),
 				'default'     => __( 'Default Instructions.', 'mpesa-woo-pay' ),
+				'desc_tip'    => true,
+			),
+			'accountref'              => array(
+				'title' => __( 'Account Reference',
+                            'mpesa-woo-pay'), 
+				'type'        => 'text',
+				'description' => __( 'Identifier of the transaction for CustomerPayBillOnline transaction type. Along with the business name, this value is also displayed to the customer in the STK Pin Prompt message', 'woocommerce' ),
+				'default'     => __( 'Kidslove Collection', 'mpesa-woo-pay' ),
+				'desc_tip'    => true,
+			),
+			'consumer_key'              => array(
+				'title' => __( 'Consumer Key',
+                            'mpesa-woo-pay'), 
+				'type'        => 'text',
+				'description' => __( 'Provided together with Consumer Secret in the Daraja platform on creating an application.', 'mpesa-woo-pay' ),
+				'placeholder' => __( 'Enter consumer secret', 'mpesa-woo-pay' ),
+				'desc_tip'    => true,
+			),
+			'consumer_secret'              => array(
+				'title' => __( 'Consumer Secret',
+                            'mpesa-woo-pay'), 
+				'type'        => 'text',
+				'description' => __( 'Provided together with Consumer Key in the Daraja platform on creating an application.', 'mpesa-woo-pay' ),
+				'placeholder' => __( 'Enter consumer secret', 'mpesa-woo-pay' ),
+				'desc_tip'    => true,
+			),
+			
+			'transaction_type'              => array(
+				'title' => __( 'Transaction type',
+                            'mpesa-woo-pay'), 
+				'type'        => 'select',
+				'options' => array( 
+					/**1 => __( 'MSISDN', 'woocommerce' ),*/
+				   'CustomerPayBillOnline' => __( 'Paybill Number', 'mpesa-woo-pay' ),
+				   'CustomerBuyGoodsOnline' => __( 'Till Number', 'mpesa-woo-pay' )
+			  ),
+			  'description' => __( 'MPesa Identifier Type', 'mpesa-woo-pay' ),
+			  'desc_tip'    => true,
+			),
+			'business_short_code'              => array(
+				'title' => __( 'Business Shortcode',
+                            'mpesa-woo-pay'), 
+				'type'        => 'text',
+				'description' => __( 'Your MPesa Business Till/Paybill Number. Use "Online Shortcode" in Sandbox', 'mpesa-woo-pay' ),
+				'default'     => __( '174379', 'mpesa-woo-pay' ),
+				'desc_tip'    => true,
+			),
+			'passKey'              => array(
+				'title' => __( 'Pass Key',
+                            'mpesa-woo-pay'), 
+				'type'        => 'textarea',
+				'description' => __( 'Used to create a password for use when making a Lipa Na M-Pesa Online Payment API call.', 'mpesa-woo-pay' ),
+				'default'     => __( 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919', 'mpesa-woo-pay' ),
+				'desc_tip'    => true,
+			),
+			'callback_url'              => array(
+				'title' => __( 'Callback Url',
+                            'mpesa-woo-pay'), 
+				'type'        => 'text',
+				'description' => __( 'Callback URL where responce is submitted', 'mpesa-woo-pay' ),
+				'default'     => __( 'https://http://kidslove.co.ke/callback/callback.php', 'mpesa-woo-pay' ),
+				'desc_tip'    => true,
+			),
+			'auth_url'              => array(
+				'title' => __( 'Authentication Url',
+                            'mpesa-woo-pay'), 
+				'type'        => 'text',
+				'description' => __( 'Authentication Url provided on Daraja platform.', 'mpesa-woo-pay' ),
+				'default'     => __( 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials', 'mpesa-woo-pay' ),
+				'desc_tip'    => true,
+			),
+			'api_endpoint_url'              => array(
+				'title' => __( 'Endpoint Url',
+                            'mpesa-woo-pay'), 
+				'type'        => 'text',
+				'description' => __( 'Endpoint provided on Daraja platform.', 'mpesa-woo-pay' ),
+				'default'     => __( 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', 'mpesa-woo-pay' ),
 				'desc_tip'    => true,
 			),
 			'enable_for_methods' => array(
@@ -301,16 +390,14 @@ class WC_Gateway_LipaNaMpesa extends WC_Payment_Gateway {
 		$order = wc_get_order( $order_id );
 
 		if ( $order->get_total() > 0 ) {
-			
 			//process mpesa stk push
-			//$this->lipa_na_mpesa_payment_processing();
+			$this->lipa_na_mpesa_payment_processing($order);
 			
 		} else {
 			$order->payment_complete();
 		}
-
-		// Remove cart.
-		WC()->cart->empty_cart();
+			// Remove cart.
+		//WC()->cart->empty_cart();
 
 		// Return thankyou redirect.
 		return array(
@@ -319,17 +406,94 @@ class WC_Gateway_LipaNaMpesa extends WC_Payment_Gateway {
 		);
 	}
 
-	private function lipa_na_mpesa_payment_processing($order_id){
-		$order = wc_get_order( $order_id );
+	
+
+	function lipa_na_mpesa_payment_processing($order){
+		$total = intval($order->get_total());
+
+		$url = $this->api_endpoint_url;
+		$curl_post_data = [
+			'BusinessShortCode' => $this->business_short_code,
+            'Password' => $this->lipaNaMpesaPassword(),
+            'Timestamp' => date( 'YmdHis' ),
+            'TransactionType' => $this->transaction_type,
+            'Amount' => 1,
+            'PartyA' => esc_attr( $_POST['payment_number'] ),
+            'PartyB' => $this->business_short_code,
+            'PhoneNumber' => $_POST['payment_number'],
+            'CallBackURL' => $this->callback_url,
+            'AccountReference' => $this->accountref,
+            'TransactionDesc' => "Payment for Order #: ". $order->get_order_number(),
+		];
+
+		$data_string = json_encode($curl_post_data);
+
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_URL, $url);
+		curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-Type:application/json','Authorization:Bearer '.$this->newAccessToken()));
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $data_string);
+        $response = curl_exec($curl);
+		$result = json_decode($response);
+    
+
+		if( is_wp_error( $result )){
+			$error_message = $result->get_error_message();
+			echo "Something went wrong: $error_message";
+		} else {
+			echo 'Response:<pre>';
+			print_r( $result );
+			echo '</pre>';
+		}
+		//die;
+}
+
+
+		//get LipaNaMpesa password
+	public function lipaNaMpesaPassword()
+	{
+		# Get the timestamp, format YYYYmmddhms -> 20181004151020
+		$Timestamp = date( 'YmdHis' );
+		 //passkey
+		 $passKey = $this->passKey;
+		 $businessShortCode = $this->business_short_code;
+		 //generate password
+		 $mpesaPassword = base64_encode($businessShortCode.$passKey.$Timestamp);
+		 return $mpesaPassword;
+	}
+
+		//get newAccessToken
+		public function newAccessToken(){
+			$consumer_key = $this->consumer_key;
+			$consumer_secret = $this->consumer_secret;
+			$credentials = base64_encode($consumer_key.":".$consumer_secret);
+			$url = $this->auth_url;
+
+			$curl = curl_init();
+			curl_setopt($curl, CURLOPT_URL, $url);
+			curl_setopt($curl, CURLOPT_HTTPHEADER, array("Authorization: Basic ".$credentials,"Content_type:application/json"));
+			curl_setopt($curl, CURLOPT_HEADER, false);
+			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+			curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+			$curl_response = curl_exec($curl);
+			$access_token = json_decode($curl_response);
+			curl_close($curl);
+
+			return $access_token->access_token;
+		}
+
+
+		//$order = wc_get_order( $order_id );
 
 
 		
 // if pending payment
-$order->update_status( apply_filters( 'woocommerce_mpesa_process_payment_order_status', $order->has_downloadable_item() ? 'wc-invoiced' : 'processing',$order ), __( 'Payments pending.', 'mpesa-woo-pay' ) );
+//$order->update_status( apply_filters( 'woocommerce_mpesa_process_payment_order_status', $order->has_downloadable_item() ? 'wc-invoiced' : 'processing',$order ), __( 'Payments pending.', 'mpesa-woo-pay' ) );
 
 //if cleared
-$order->payment_complete();
-	}
+//$order->payment_complete();
+	
 
 	/**
 	 * Output for the order received page.
